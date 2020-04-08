@@ -4,14 +4,15 @@ Admin Submission API allows submission of URLs, mail messages, file mail message
 The repo provides a PowerShell script that allows to submit URLs and read re-scan result
 
 ## Pre-requisites
-•	Registered Azure AD app with Delegated permission: Read and write threat assessment requests (ThreatAssessment.ReadWrite.All). For creating new request, we need delegated permission to access users’ data as a signed-in user.
-•	Azure AD PowerShell: https://www.powershellgallery.com/packages/AzureAD/
-•	Azure AD user account. This user will be used to authenticate to Azure AD when running the script. The script uses Authorization Code flow OAUTH for authentication
+* Registered Azure AD app with Delegated permission: Read and write threat assessment requests (ThreatAssessment.ReadWrite.All). For creating new request, we need delegated permission to access users’ data as a signed-in user.
+* Azure AD PowerShell: https://www.powershellgallery.com/packages/AzureAD/
+* Azure AD user account. This user will be used to authenticate to Azure AD when running the script. The script uses Authorization Code flow OAUTH for authentication
 
 ## Deployment
 
 ### Azure AD app registration
 1.  Navigate to the [Azure AD admin portal](https://aad.portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps)
+![App registration](/images/register.png)
 2.  Click “New registration”
 3.  Enter name of your app for example "Threat Assessment". Leave “Accounts in this organizational directory only” option selected
 4.  Select “public client/native” and click "Register"
