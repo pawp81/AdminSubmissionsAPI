@@ -37,9 +37,16 @@ Select the checkbox next to the "msal{AppID}://auth (MSAL only)".
 ![User assignment](/images/User_assignment_required.png)
 
 ## Script run parameters
-* Username – REQUIRED userPrincipalName of the user 
+* username (REQUIRED) – userPrincipalName of the user assigned to the app. 
 * url – full URL (including protocol) to be submitted. This is parameter is used when single URL is to be submitted
 * filepath - Path to the text file with URLs to be submitted. URLs should be in single column, without any header
+
+## Examples
+Bulk URL submission:
+```.\AdminSubmissionAPI.ps1 -Username joe.doe@contoso.com -filepath URLs.txt```
+
+Single URL submission:
+```.\AdminSubmissionAPI.ps1 -Username joe.doe@contoso.com -url http://www.spamlink.contoso.com```
 
 ## License
 We're completely open source and as matter of fact we also use some open source components in our report.
