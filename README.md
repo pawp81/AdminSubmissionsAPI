@@ -22,6 +22,7 @@ The repo provides a PowerShell script that allows to submit URLs and read re-sca
 7.  Click "Delegated permissions". Scroll down through the list of permission. Select "ThreatAssessment.ReadWrite.All". Click “Add permissions”.
 
 ![Permissions](/images/ThreatAssessment.ReadWrite.All.png)
+
 8.  Refresh the list of permissions. Click “Grant admin consent for <your organization’s name>”. Click Yes.
 ![GrantConsent](/images/GrantConsent.png)
 9.  Next click on “Authentication” from left navigation menu, click on “Switch to the old experience”
