@@ -201,7 +201,7 @@ function Submit-URL {
 					if ($continue -ne "0")
 					{
 						$delay2=$continue*60
-						write-host "waiting for $delay2 minutes"
+						write-host "waiting for $continue minutes"
 						start-sleep $delay2
 						$ThreatRequestResult=Invoke-WebRequest -Uri $SubmissionResultURL -Headers $headers -Method GET -ContentType 'application/json; charset=utf-8'
 						$content=$ThreatRequestResult.content | convertFrom-JSON
