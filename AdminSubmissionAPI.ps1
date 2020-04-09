@@ -196,11 +196,12 @@ function Submit-URL {
 				}
 				else
 				{
-					write-host $content.url " Scan still in progress" -foregroundcolor yellow
-					$continue=read-host "Check again for scan result? If yes how long do you want to wait? [No/minutes]"
-					if ($continue -ne "No")
+					write-host $content.url " scan still in progress" -foregroundcolor yellow
+					[int]$continue=read-host 'Check again for scan result? If yes how long do you want to wait? [Press "0" for No or enter other digit for duration in minutes]'
+					if ($continue -ne "0")
 					{
 						$delay2=$continue*60
+						write-host "waiting for $delay2 minutes"
 						start-sleep $delay2
 						$ThreatRequestResult=Invoke-WebRequest -Uri $SubmissionResultURL -Headers $headers -Method GET -ContentType 'application/json; charset=utf-8'
 						$content=$ThreatRequestResult.content | convertFrom-JSON
@@ -210,7 +211,7 @@ function Submit-URL {
 						}
 						else
 						{
-							write-host $content.url " Scan still in progress" -foregroundcolor yellow
+							write-host $content.url " scan still in progress" -foregroundcolor yellow
 						}
 					}
 				}
