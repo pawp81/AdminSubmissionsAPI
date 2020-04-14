@@ -35,6 +35,7 @@ Select the checkbox next to the "msal{AppID}://auth (MSAL only)".
 ![Adding user](/images/AddUser.png)
 13. Next in the Enterprise Application window, navigate to “Properties”. Select Yes next to “User assignment required” and click “Save”
 ![User assignment](/images/User_assignment_required.png)
+14. In the script code update the path of the $authority url variable value with the default name of your tenant (for example: $authority="https://login.microsoftonline.com/contoso.onmicrosoft.com )
 
 ## Script run parameters
 * username (REQUIRED) – userPrincipalName of the user assigned to the app. 
