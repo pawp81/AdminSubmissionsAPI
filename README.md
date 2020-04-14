@@ -51,10 +51,6 @@ Single URL submission:
 
 ## License
 We're completely open source and as matter of fact we also use some open source components in our report.
-We use the following components in order to generate the report
-•	Bootstrap, MIT License - https://getbootstrap.com/docs/4.0/about/license/
-•	Fontawesome, CC BY 4.0 License - https://fontawesome.com/license/free
-
 
 ## References
 Public documentation the API: https://docs.microsoft.com/en-us/graph/api/resources/threatassessment-api-overview

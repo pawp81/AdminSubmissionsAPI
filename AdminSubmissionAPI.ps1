@@ -8,11 +8,6 @@
 		Senior Program Manager - Microsoft
         ppartyka@microsoft.com
         
-
-        Output report uses open source components for HTML formatting
-        - bootstrap - MIT License - https://getbootstrap.com/docs/4.0/about/license/
-        - fontawesome - CC BY 4.0 License - https://fontawesome.com/license/free
-        
         ############################################################################
         This sample script is not supported under any Microsoft standard support program or service. 
         This sample script is provided AS IS without warranty of any kind. 
