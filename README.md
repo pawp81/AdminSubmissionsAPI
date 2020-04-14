@@ -28,7 +28,7 @@ The repo provides a PowerShell script that allows to submit URLs and read re-sca
 9.  Next click on “Authentication” from left navigation menu, click on “Switch to the old experience”
 Select the checkbox next to the "msal{AppID}://auth (MSAL only)".
 ![Authentication](/images/authentication.png)
-10. Copy msal{AppID}://auth and paste the RedirectURI to script code next into the $redirectURI variable. Click “Save” in the Azure AD app Authentication settings window.
+10. Copy msal{AppID}://auth and paste the RedirectURI to script code as the value of $redirectURI variable. Click “Save” in the Azure AD app Authentication settings window.
 11. On the App screen click “Overview” and copy “Application (client) ID” to the script code into the $clientID variable.
 ![AppID](/images/AppID.png)
 12. Next, we need to assign user allowed to use this app. Assign user(s) to the app by following instruction from [this article](https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/assign-user-or-group-access-portal#assign-users-or-groups-to-an-app-via-the-azure-portal) 
