@@ -1,5 +1,5 @@
 ## Using Email_AdminSubmissionAPI script
-Email_AdminSubmissionAPI script searches for email to be submitted using Graph API. Then script either takes the found message and submits it or takes the attachment of the found message (the latter is useful when emails to be submitted are in the custom mailbox were they are reported by users using Cofense Outlook phishing button or Microsoft Report Message add-in). Because of that Azure AD app requires additional Microsoft Graph permissions:
+[Email_AdminSubmissionAPI](https://github.com/pawp81/AdminSubmissionsAPI/edit/master/Email_AdminSubmissionAPI.ps1) script searches for email to be submitted using Graph API. Then script either takes the found message and submits it or takes the attachment of the found message (the latter is useful when emails to be submitted are in the custom mailbox were they are reported by users using Cofense Outlook phishing button or Microsoft Report Message add-in). Because of that Azure AD app requires additional Microsoft Graph permissions:
 * Read user mail (Mail.Read)
 * Read user and shared mail (Mail.Read.Shared) (optional - needed if authenticated user should be able to submit emails not only for his/her mailbox but also from shared mailbox she/he has access to).
 Script cannot run as a daemon. It requires authentication of the user performing the submission.
@@ -15,4 +15,10 @@ Script can look for email using Internet Message ID (if *InternetMessageID* para
 * *mailbox* - (mandatory) Mailbox from which email is to be submitted
 * *attachment* - If set to true specifies that attachment of the found message should be submitted.  If not set message itself specified by InternetMessageID or by agoHours will be submitted.
 * *category* - (mandatory) Specifies what category of the email submission is used. Allowed values: "phishing", "spam".
+
+### References
+mailAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/mailassessmentrequest?view=graph-rest-1.0
+emailFileAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/emailfileassessmentrequest?view=graph-rest-1.0
+Create a mail assessment request https://docs.microsoft.com/en-us/graph/api/informationprotection-post-threatassessmentrequests?view=graph-rest-1.0&tabs=http#examples
+
 
