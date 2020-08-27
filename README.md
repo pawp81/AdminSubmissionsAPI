@@ -41,4 +41,7 @@ Select the checkbox next to the "msal{AppID}://auth (MSAL only)".
 ![User assignment](/images/User_assignment_required.png)
 14. In the script code update the path of the $authority url variable value with the default name of your tenant (for example: $authority="https://login.microsoftonline.com/contoso.onmicrosoft.com )
 
-
+### Script operation instructions
+After pre-requisites and deployment steps are fullfiled please read below manuals on how to execute the scripts:
+[URL submission](https://github.com/pawp81/AdminSubmissionsAPI/blob/master/URLSubmission.md)
+[Email submission](https://github.com/pawp81/AdminSubmissionsAPI/blob/master/EmailSubmission.md)
