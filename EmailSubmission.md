@@ -17,8 +17,8 @@ Script can look for email using Internet Message ID (if *InternetMessageID* para
 * *category* - (mandatory) Specifies what category of the email submission is used. Allowed values: "phishing", "spam".
 
 ### References
-mailAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/mailassessmentrequest?view=graph-rest-1.0
-emailFileAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/emailfileassessmentrequest?view=graph-rest-1.0
-Create a mail assessment request https://docs.microsoft.com/en-us/graph/api/informationprotection-post-threatassessmentrequests?view=graph-rest-1.0&tabs=http#examples
+* mailAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/mailassessmentrequest?view=graph-rest-1.0
+* emailFileAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/emailfileassessmentrequest?view=graph-rest-1.0
+* Create a mail assessment request https://docs.microsoft.com/en-us/graph/api/informationprotection-post-threatassessmentrequests?view=graph-rest-1.0&tabs=http#examples
 
 
