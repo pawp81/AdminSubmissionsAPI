@@ -1,7 +1,11 @@
-# URL AdminSubmissionsAPI
+# AdminSubmissionsAPI
 
 Admin Submission API allows submission of URLs, mail messages, file mail messages and files to Microsoft to re-scan and get newest verdict on submitted entity. Admin Submissions API is available both to Exchange Online Protection customers as well as to Office 365 ATP customers.
-The repo provides a PowerShell script that allows to submit URLs and read re-scan result
+The repo provides two PowerShell scripts:
+1. for URLs submission
+2. for email and emails from the attachment
+Both scripts provide read of re-scan result capability.
+The pre-requisites and preparation steps for URL and email submissions scripts related to the Azure AD app registration are the same and are described below,
 
 ## Pre-requisites
 * Registered Azure AD app with Delegated permission: Read and write threat assessment requests (ThreatAssessment.ReadWrite.All). For creating new request, we need delegated permission to access users’ data as a signed-in user.
