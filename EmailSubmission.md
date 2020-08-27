@@ -1,1 +1,2 @@
-
+## Using Email_AdminSubmissionAPI script
+Email_AdminSubmissionAPI script searches for email to be submitted using Graph API. Then script either takes the found message and submits it or takes the attachment of the found message (the latter is useful when emails to be submitted are in the custom mailbox were they are reported by users using Cofense Outlook phishing button or Microsoft Report Message add-in)
