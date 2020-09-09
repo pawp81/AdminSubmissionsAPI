@@ -61,7 +61,7 @@ $authority = "https://login.microsoftonline.com/........."
 
 # List of static variables.
 $resourceURI = "https://graph.microsoft.com"
-$authority = "https://login.microsoftonline.com/wdgcxp.onmicrosoft.com"
+$authority = "https://login.microsoftonline.com/<yourtenantname>"
 $GraphUrl="https://graph.microsoft.com/v1.0/informationProtection/threatAssessmentRequests"
 $day=(get-date).day
 $month=(get-date).month
