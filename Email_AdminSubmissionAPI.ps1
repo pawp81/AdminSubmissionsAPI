@@ -31,14 +31,18 @@ Don't use brackets when providing InternetMessageID
 Set attachment: $true is email to be submitted is in the attachment.
 
 Examples:
+ Submit single email received by John Doe. Refer the message by its InternetmessageID 
+.\Email_AdminSubmissionAPI.ps1 -Username john.doe@contoso.com  -InternetMessageID MWHPR01MB2574F219BE7EDC5E41153730CA290@MWHPR01MB2574.prod.exchangelabs.com -mailbox john.doe@contoso.com -category phishing
+
+ Submit single email received by SOC mailbox. Refer the message by its InternetmessageID. Instead of submitting actual message script submits its attachment
+.\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -InternetMessageID MWHPR01MB2574F219BE7EDC5E41153730CA290@MWHPR01MB2574.prod.exchangelabs.com -mailbox soc@contoso.com -category phishing -attachment $true
+
  Submit attachments of the emails received by soc@contoso.com mailbox in last 24h. Submit emails as phishing. Use admin@contoso.com credentials for authentication
 .\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com -agoHours 24 -mailbox soc@contoso.com -category phishing -attachment $true
 
  Submit emails received by John Doe mailbox in last 24h as phishing.
 .\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -agoHours 24 -mailbox john.doe@contoso.com -category phishing
 
- Submit emails received by John Doe mailbox in last 24h as phishing.
-.\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -agoHours 24 -mailbox john.doe@contoso.com -category phishing
 #>
 
 param(
