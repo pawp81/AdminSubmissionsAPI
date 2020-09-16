@@ -4,7 +4,8 @@
 * Read user and shared mail (Mail.Read.Shared) (optional - needed if authenticated user should be able to submit emails not only for his/her mailbox but also from shared mailbox she/he has access to).
 Script cannot run as a daemon. It requires authentication of the user performing the submission.
 
-If organization doesn't allow users consent, admin will need to consent Mail.Read and Mail.Read.Shared permissions.
+![User_Consent](/images/User_consent.png)
+If organization doesn't allow users consent (as shown on above screenshot), admin will need to consent Mail.Read and Mail.Read.Shared permissions.
 
 ### Script search logic
 The script can look for emails in the single mailbox only. The mailbox to search is specified by *mailbox* parameter.
