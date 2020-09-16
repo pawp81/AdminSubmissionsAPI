@@ -4,6 +4,8 @@
 * Read user and shared mail (Mail.Read.Shared) (optional - needed if authenticated user should be able to submit emails not only for his/her mailbox but also from shared mailbox she/he has access to).
 Script cannot run as a daemon. It requires authentication of the user performing the submission.
 
+If organization doesn't allow users consent, admin will need to consent Mail.Read and Mail.Read.Shared permissions.
+
 ### Script search logic
 The script can look for emails in the single mailbox only. The mailbox to search is specified by *mailbox* parameter.
 Script can look for email using Internet Message ID (if *InternetMessageID* parameter is used) or submit all emails received by the mailbox in x number of hours since now (specified by *agoHours* parameter). AgoHours and InternetMessageID attributes should be used in a mutually exclusive manner.
