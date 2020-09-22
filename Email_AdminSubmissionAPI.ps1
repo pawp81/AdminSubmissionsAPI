@@ -60,12 +60,11 @@ param(
 
 # configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI
 $clientId =  ""
-$redirectUri = "" 
-$authority = "https://login.microsoftonline.com/........."
+$redirectUri = "msal://auth" 
+$authority = "https://login.microsoftonline.com/<tenantname>"
 
 # List of static variables.
 $resourceURI = "https://graph.microsoft.com"
-$authority = "https://login.microsoftonline.com/<yourtenantname>"
 $GraphUrl="https://graph.microsoft.com/v1.0/informationProtection/threatAssessmentRequests"
 $day=(get-date).day
 $month=(get-date).month
@@ -158,13 +157,12 @@ Param
 	if ($agoHours)
 	{
 		$startdate=(get-date).AddHours(-$agohours).tostring("yyyy-MM-dd")
-		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
 	}
 	
 	write-host "Searching for:" $URI
 	$MessageJSON=Invoke-WebRequest -Uri $URI -Headers $headers
 	$Messages=$MessageJSON.content | ConvertFrom-JSON
-	write-host $Messages.value
 	if ($Messages.value.length -eq 0)
 	{
 		write-host "Message not found. Existing" -foregroundcolor Red
@@ -186,20 +184,30 @@ Param
 		foreach ($MessageID in $MessageIDs)
 		{
 			$MessageAttachmentURI="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/"
-			$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
-			$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
-			write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
-			$AttachmentID=$MessageAttachment.value.id
-			$AttachmentName=$MessageAttachment.value.name
-						
-			#downloading the attachment to current folder
-			$temppath= $attachmentID+".eml"
-			$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
-			write-host "Sending request to fetch attachment: " $AttachmentFetchURL
-			Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
+			try{
+				$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
+				$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
+			}
+			catch
+			{
+				write-host "`n"
+				write-host "Attachment for Message ID $MessageID not found" -foregroundcolor red
+			}
 			
-			$path += $attachmentID+".eml"
-			 	
+			if ($MessageAttachment.value.id.length -gt 0)
+			{
+				write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
+				$AttachmentID=$MessageAttachment.value.id
+				$AttachmentName=$MessageAttachment.value.name
+							
+				#downloading the attachment to current folder
+				$temppath= $attachmentID+".eml"
+				$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
+				write-host "Sending request to fetch attachment: " $AttachmentFetchURL
+				Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
+			
+				$path += $attachmentID+".eml"
+			}
 		}
 		$return.path=$path
 	}
@@ -310,7 +318,6 @@ Param
 	$ThreatRequestIDs=@()
 	foreach ($attachmentname in $attachmentnames)
 	{
-		
 		[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
 		write-host "`n"
 		write-host "Submitting following file:" $attachmentpath -foregroundcolor green
@@ -336,7 +343,6 @@ Param
 		"contentData": "$EncodedContent"
 }
 "@
-			$body
 			$accessToken=Get-AccessToken
 			$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
 		
