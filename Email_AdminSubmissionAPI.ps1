@@ -54,8 +54,8 @@ param(
 		[string]$mailbox,
 		[boolean]$attachment,
 		[Parameter(Mandatory = $true)]
-		[string]$category #allowed values: "phishing", "spam"
-		
+		[string]$category, #allowed values: "phishing", "spam"
+		[boolean]$confirm
     )
 
 # configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI
@@ -71,7 +71,7 @@ $day=(get-date).day
 $month=(get-date).month
 $year=(get-date).year
 $random=get-random -Maximum 10000
-$fileSubmissionIDs="c:\PawelSecurityReader\FN-list-$day-$month-$year_$random.txt"
+$fileSubmissionIDs="SubmissionIDs-list-$day-$month-$year_$random.txt"
 
 function Get-AccessToken{
 	
@@ -241,10 +241,15 @@ function Submit-Email {
 	{
 		write-host "`n"
 		write-host "Evaluating " $MessageURI_ID -foregroundcolor green
-
-		$submit=read-host "Submit this Email? [YES]"
-		
-		if ($submit -eq "yes")
+		if ($confirm -eq $true)
+		{
+			$submit=read-host "Submit this Email? [YES]"
+		}
+		else
+		{
+			$submit="yes"	
+		}
+		if ($submit -eq "yes" -or $submit -eq "y")
 		{
 		$body = @"
 		{
@@ -255,7 +260,6 @@ function Submit-Email {
 	"messageUri": "$MessageURI_ID"
 }
 "@
-		$body
 			$accessToken=Get-AccessToken
 			$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
 			
@@ -310,12 +314,18 @@ Param
 		[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
 		write-host "`n"
 		write-host "Submitting following file:" $attachmentpath -foregroundcolor green
-
-		$submit=read-host "Submit this attachment? [YES]"
+		if ($confirm -eq $true) 
+		{
+			$submit=read-host "Submit this attachment? [YES]"
+		}
+		else
+		{
+			$submit="yes"	
+		}
 		# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
 		$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
 		
-		if ($submit -eq "yes")
+		if ($submit -eq "yes" -or $submit -eq "y")
 		{
 			$body = @"
 			{
@@ -357,7 +367,14 @@ Param
 	{
 		write-host "All request IDs:"
 		$ThreatRequestIDs
-		$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
+		if ($confirm -eq $true) 
+		{
+			$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
+		}
+		else
+		{
+			$checkSubmission="no"
+		}
 		if ($checkSubmission -eq "Yes")
 		{
 			Check-Submission -ThreatRequestIDs $ThreatRequestIDs
