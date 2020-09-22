@@ -150,6 +150,7 @@ Param
 	
 	$accessToken=Get-AccessToken
 	$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
+	# https://docs.microsoft.com/en-us/graph/api/user-list-messages?view=graph-rest-1.0&tabs=http
 	if ($InternetMessageID)
 	{
 		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$select=id,toRecipients&`$filter=InternetMessageID eq '<$InternetMessageID>'"
