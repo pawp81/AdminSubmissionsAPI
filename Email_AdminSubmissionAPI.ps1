@@ -31,31 +31,28 @@ Don't use brackets when providing InternetMessageID
 Set attachment: $true is email to be submitted is in the attachment.
 
 Examples:
- Submit single email received by John Doe. Refer the message by its InternetmessageID 
-.\Email_AdminSubmissionAPI.ps1 -Username john.doe@contoso.com  -InternetMessageID MWHPR01MB2574F219BE7EDC5E41153730CA290@MWHPR01MB2574.prod.exchangelabs.com -mailbox john.doe@contoso.com -category phishing
-
- Submit single email received by SOC mailbox. Refer the message by its InternetmessageID. Instead of submitting actual message script submits its attachment
-.\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -InternetMessageID MWHPR01MB2574F219BE7EDC5E41153730CA290@MWHPR01MB2574.prod.exchangelabs.com -mailbox soc@contoso.com -category phishing -attachment $true
-
  Submit attachments of the emails received by soc@contoso.com mailbox in last 24h. Submit emails as phishing. Use admin@contoso.com credentials for authentication
 .\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com -agoHours 24 -mailbox soc@contoso.com -category phishing -attachment $true
 
  Submit emails received by John Doe mailbox in last 24h as phishing.
 .\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -agoHours 24 -mailbox john.doe@contoso.com -category phishing
 
+ Submit emails received by John Doe mailbox in last 24h as phishing.
+.\Email_AdminSubmissionAPI.ps1 -Username admin@contoso.com  -agoHours 24 -mailbox john.doe@contoso.com -category phishing
 #>
 
 param(
         [Parameter(Mandatory = $true)]
         [string]$Username,
 		[int]$agoHours,
+		[int]$agoMinutes,
 		[string]$InternetMessageID,
 		[Parameter(Mandatory = $true)]
 		[string]$mailbox,
 		[boolean]$attachment,
 		[Parameter(Mandatory = $true)]
 		[string]$category, #allowed values: "phishing", "spam"
-		[boolean]$confirm
+		[boolean] $confirm #no prompt for making a submission.
     )
 
 # configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI
@@ -70,7 +67,7 @@ $day=(get-date).day
 $month=(get-date).month
 $year=(get-date).year
 $random=get-random -Maximum 10000
-$fileSubmissionIDs="SubmissionIDs-list-$day-$month-$year_$random.txt"
+$fileSubmissionIDs="FN-list-$day-$month-$year_$random.txt"
 
 function Get-AccessToken{
 	
@@ -150,23 +147,30 @@ Param
 	
 	$accessToken=Get-AccessToken
 	$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
-	# https://docs.microsoft.com/en-us/graph/api/user-list-messages?view=graph-rest-1.0&tabs=http
 	if ($InternetMessageID)
 	{
-		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$select=id,toRecipients&`$filter=InternetMessageID eq '<$InternetMessageID>'"
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=InternetMessageID eq '<$InternetMessageID>'"
 	}
 	if ($agoHours)
 	{
-		$startdate=(get-date).AddHours(-$agohours).tostring("yyyy-MM-dd")
+		$startdate=(get-date).AddHours(-$agohours).ToUniversalTime()
+		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'hh:mm'Z'")
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
+	}
+	if ($agoMinutes)
+	{
+		$startdate_temp=(get-date).AddMinutes(-$agominutes).ToUniversalTime()
+		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'hh:mm'Z'")
 		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
 	}
 	
 	write-host "Searching for:" $URI
 	$MessageJSON=Invoke-WebRequest -Uri $URI -Headers $headers
 	$Messages=$MessageJSON.content | ConvertFrom-JSON
+	write-host $Messages.value
 	if ($Messages.value.length -eq 0)
 	{
-		write-host "Message not found. Existing" -foregroundcolor Red
+		write-host "Message not found. Exiting" -foregroundcolor Red
 		exit
 	}
 	$MessageIDs = @()
@@ -185,30 +189,20 @@ Param
 		foreach ($MessageID in $MessageIDs)
 		{
 			$MessageAttachmentURI="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/"
-			try{
-				$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
-				$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
-			}
-			catch
-			{
-				write-host "`n"
-				write-host "Attachment for Message ID $MessageID not found" -foregroundcolor red
-			}
+			$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
+			$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
+			write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
+			$AttachmentID=$MessageAttachment.value.id
+			$AttachmentName=$MessageAttachment.value.name
+						
+			#downloading the attachment to current folder
+			$temppath= $attachmentID+".eml"
+			$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
+			write-host "Sending request to fetch attachment: " $AttachmentFetchURL
+			Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
 			
-			if ($MessageAttachment.value.id.length -gt 0)
-			{
-				write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
-				$AttachmentID=$MessageAttachment.value.id
-				$AttachmentName=$MessageAttachment.value.name
-							
-				#downloading the attachment to current folder
-				$temppath= $attachmentID+".eml"
-				$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
-				write-host "Sending request to fetch attachment: " $AttachmentFetchURL
-				Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
-			
-				$path += $attachmentID+".eml"
-			}
+			$path += $attachmentID+".eml"
+			 	
 		}
 		$return.path=$path
 	}
@@ -254,10 +248,10 @@ function Submit-Email {
 		{
 			$submit=read-host "Submit this Email? [YES]"
 		}
-		else
-		{
-			$submit="yes"	
+		else {
+			$submit="yes"
 		}
+		
 		if ($submit -eq "yes" -or $submit -eq "y")
 		{
 		$body = @"
@@ -269,6 +263,7 @@ function Submit-Email {
 	"messageUri": "$MessageURI_ID"
 }
 "@
+		
 			$accessToken=Get-AccessToken
 			$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
 			
@@ -300,10 +295,13 @@ function Submit-Email {
 	{
 		write-host "All request IDs:"
 		$ThreatRequestIDs
-		$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
-		if ($checkSubmission -eq "Yes")
+		if ($confirm -eq $true)
 		{
-			Check-Submission -ThreatRequestIDs $ThreatRequestIDs
+			$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
+			if ($checkSubmission -eq "Yes")
+			{
+				Check-Submission -ThreatRequestIDs $ThreatRequestIDs
+			}
 		}
 	}
 }
@@ -319,21 +317,21 @@ Param
 	$ThreatRequestIDs=@()
 	foreach ($attachmentname in $attachmentnames)
 	{
+		
 		[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
 		write-host "`n"
 		write-host "Submitting following file:" $attachmentpath -foregroundcolor green
-		if ($confirm -eq $true) 
+		if ($confirm -eq $true)
 		{
 			$submit=read-host "Submit this attachment? [YES]"
 		}
-		else
-		{
-			$submit="yes"	
+		else {
+			$submit="yes"
 		}
 		# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
 		$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
 		
-		if ($submit -eq "yes" -or $submit -eq "y")
+		if ($submit -eq "yes")
 		{
 			$body = @"
 			{
@@ -344,6 +342,7 @@ Param
 		"contentData": "$EncodedContent"
 }
 "@
+			
 			$accessToken=Get-AccessToken
 			$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
 		
@@ -374,14 +373,13 @@ Param
 	{
 		write-host "All request IDs:"
 		$ThreatRequestIDs
-		if ($confirm -eq $true) 
+		if ($confirm -eq $true)
 		{
 			$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
 		}
-		else
-		{
-			$checkSubmission="no"
-		}
+		else {
+			$checkSubmission = "No"
+		}	
 		if ($checkSubmission -eq "Yes")
 		{
 			Check-Submission -ThreatRequestIDs $ThreatRequestIDs
