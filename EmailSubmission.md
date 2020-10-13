@@ -14,10 +14,12 @@ Script can look for email using Internet Message ID (if *InternetMessageID* para
 ### Script parameters:
 * *username* - (mandatory)userPrincipalName of the user assigned to the app
 * *agoHours* - Specifies how many hours from now, should the script look for emails to submit. For example setting -agoHours 24 will look for all emails received by the mailbox in last 24h and submit them (or their attachments)
+* *agoMinutes* - Specifies how many minutes from now, should the script look for emails to submit. For example setting -agoMinutes 15 will look for all emails received by the mailbox in last 15 minutes and submit them (or their attachments)
 * *InternetMessageID* - InternetMessageID of the message to be submitted or its attachment. Should be provided without <> brackets
 * *mailbox* - (mandatory) Mailbox from which email is to be submitted
 * *attachment* - If set to true specifies that attachment of the found message should be submitted.  If not set message itself specified by InternetMessageID or by agoHours will be submitted.
 * *category* - (mandatory) Specifies what category of the email submission is used. Allowed values: "phishing", "spam".
+* *confirm* - should be set to $true if you want to manually confirm every submission
 
 ### References
 * mailAssessmentRequest resource type https://docs.microsoft.com/en-us/graph/api/resources/mailassessmentrequest?view=graph-rest-1.0
