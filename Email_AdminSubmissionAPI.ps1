@@ -67,7 +67,7 @@ $day=(get-date).day
 $month=(get-date).month
 $year=(get-date).year
 $random=get-random -Maximum 10000
-$fileSubmissionIDs="FN-list-$day-$month-$year_$random.txt"
+$fileSubmissionIDs="SubmissionIDs-$day-$month-$year_$random.txt"
 
 function Get-AccessToken{
 	
