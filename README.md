@@ -45,3 +45,4 @@ Select the checkbox next to the "msal{AppID}://auth (MSAL only)".
 After pre-requisites and deployment steps are fullfiled please read below manuals on how to execute the scripts:
 * [URL submission](https://github.com/pawp81/AdminSubmissionsAPI/blob/master/URLSubmission.md)
 * [Email submission](https://github.com/pawp81/AdminSubmissionsAPI/blob/master/EmailSubmission.md)
+* [Get submission result](https://github.com/pawp81/AdminSubmissionsAPI/blob/master/Get-AdminSubmission.ps1)
