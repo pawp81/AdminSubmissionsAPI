@@ -9,7 +9,7 @@ The pre-requisites and preparation steps for URL and email submissions scripts r
 
 ## Pre-requisites
 * Registered Azure AD app with Delegated permission: Read and write threat assessment requests (ThreatAssessment.ReadWrite.All). For creating new request, we need delegated permission to access users’ data as a signed-in user.
-* Azure AD PowerShell: https://www.powershellgallery.com/packages/AzureAD/
+* MSAL PS Powershell module by Jason Thompson: https://www.powershellgallery.com/packages/MSAL.PS https://github.com/AzureAD/MSAL.PS
 * Azure AD user account. This user will be used to authenticate to Azure AD when running the script. The script uses Authorization Code flow OAUTH for authentication
 
 ## Deployment
