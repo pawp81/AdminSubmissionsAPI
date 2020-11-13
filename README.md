@@ -30,9 +30,9 @@ The pre-requisites and preparation steps for URL and email submissions scripts r
 8.  Refresh the list of permissions. Click “Grant admin consent for <your organization’s name>”. Click Yes.
 ![GrantConsent](/images/GrantConsent.png)
 9.  Next click on “Authentication” from left navigation menu. Configure Redirect URIs for Mobile and desktop applications as shown on the screenshot below by adding following ones:
-https://login.microsoftonline.com/common/oauth2/nativeclient
-http://localhost/
-urn:ietf:wg:oauth:2.0:oob
+* https://login.microsoftonline.com/common/oauth2/nativeclient
+* http://localhost/
+* urn:ietf:wg:oauth:2.0:oob
 ![Authentication](/images/authentication2.png)
 10. On the App screen click “Overview” and copy “Application (client) ID” to the script code into the $clientID variable.
 ![AppID](/images/AppID.png)
