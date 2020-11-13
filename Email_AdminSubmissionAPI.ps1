@@ -68,6 +68,7 @@ $month=(get-date).month
 $year=(get-date).year
 $random=get-random -Maximum 10000
 $fileSubmissionIDs="SubmissionIDs-$day-$month-$year_$random.txt"
+$logname="Log-$day-$month-$year_$random.txt"
 
 function Get-AccessToken{
 	
@@ -115,12 +116,14 @@ Param
 	}
 	
 	write-host "Searching for:" $URI
+	"Searching for: $URI" | out-file $logname -append
 	$MessageJSON=Invoke-WebRequest -Uri $URI -Headers $headers
 	$Messages=$MessageJSON.content | ConvertFrom-JSON
 	write-host $Messages.value
 	if ($Messages.value.length -eq 0)
 	{
 		write-host "Message not found. Exiting" -foregroundcolor Red
+		"Message not found. Exiting" | out-file $logname -append
 		exit
 	}
 	$MessageIDs = @()
@@ -129,8 +132,9 @@ Param
 		#Saving all messageIDs matching search criteria to the array
 		
 		$MessageIDs+=$Message.value.id
+		
 	}
-
+	$MessageIDs | out-file $logname -append
 	
 	if ($attachment -eq $true)
 	{
@@ -149,6 +153,7 @@ Param
 			$temppath= $attachmentID+".eml"
 			$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
 			write-host "Sending request to fetch attachment: " $AttachmentFetchURL
+			"Sending request to fetch attachment: $AttachmentFetchURL " | out-file $logname -append
 			Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
 			
 			$path += $attachmentID+".eml"
