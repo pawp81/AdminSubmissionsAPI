@@ -27,12 +27,15 @@ The pre-requisites and preparation steps for URL and email submissions scripts r
 
 ![Permissions](/images/ThreatAssessment.ReadWrite.All.png)
 
+Note that email submission script will also need following Graph API permissions: Mail.Read and Mail.Read.Shared
+
 8.  Refresh the list of permissions. Click “Grant admin consent for <your organization’s name>”. Click Yes.
 ![GrantConsent](/images/GrantConsent.png)
 9.  Next click on “Authentication” from left navigation menu. Configure Redirect URIs for Mobile and desktop applications as shown on the screenshot below by adding following ones:
 * https://login.microsoftonline.com/common/oauth2/nativeclient
 * http://localhost/
 * urn:ietf:wg:oauth:2.0:oob
+
 ![Authentication](/images/authentication2.png)
 10. On the App screen click “Overview” and copy “Application (client) ID” to the script code into the $clientID variable.
 ![AppID](/images/AppID.png)
@@ -40,7 +43,7 @@ The pre-requisites and preparation steps for URL and email submissions scripts r
 ![Adding user](/images/AddUser.png)
 12. Next in the Enterprise Application window, navigate to “Properties”. Select Yes next to “User assignment required” and click “Save”
 ![User assignment](/images/User_assignment_required.png)
-13. In the script code update the path of the $authority url variable value with the default name of your tenant (for example: $authority="https://login.microsoftonline.com/contoso.onmicrosoft.com )
+
 
 ### Script operation instructions
 After pre-requisites and deployment steps are fullfiled please read below manuals on how to execute the scripts:
