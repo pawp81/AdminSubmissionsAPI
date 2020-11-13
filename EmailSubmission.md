@@ -2,7 +2,7 @@
 [Email_AdminSubmissionAPI](https://github.com/pawp81/AdminSubmissionsAPI/edit/master/Email_AdminSubmissionAPI.ps1) script searches for email to be submitted using Graph API. After finding it either takes the message and submits it or takes the attachment of the found message and submits it (the latter is useful when emails to be submitted are in the custom mailbox were they are reported by users using Cofense Outlook phishing button or Microsoft Report Message add-in). In both cases it uses Admin Submission API for submission. Because of search capability Azure AD app requires Microsoft Graph permissions:
 * Read user mail (Mail.Read)
 * Read user and shared mail (Mail.Read.Shared) (optional - needed if authenticated user should be able to submit emails not only for his/her mailbox but also from shared mailbox she/he has access to).
-Script cannot run as a daemon. It requires authentication of the user performing the submission.
+Script can run as a daemon. However, it requires authentication of the user performing the submission. With usage of MSAL PS PowerShell module, refresh token can be saved and reused to obtain access token. Therefore no logon prompts are expected after initial run of the script.
 
 ![User_Consent](/images/User_consent.png)
 If organization doesn't allow users consent (as shown on above screenshot), admin will need to consent Mail.Read and Mail.Read.Shared permissions.
