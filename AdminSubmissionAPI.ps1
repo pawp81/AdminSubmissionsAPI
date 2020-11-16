@@ -35,81 +35,35 @@ param(
 		[string]$MessageID
 		
     )
-$clientId =  ""# enter your Azure AD app Application ID here. For example: 59e68ca6-7e71-47ec-912f-896b0c35aa3d
-$redirectUri = "msal://auth" # "enter your App ID between msal and ://auth. No space in between for example: msal59e68ca6-7e71-47ec-912f-896b0c35aa3d://auth
+	
+# configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI	
+$clientId = ""
+$tenantId = ""
+
+# List of static variables.
 $resourceURI = "https://graph.microsoft.com"
-$authority = "https://login.microsoftonline.com/" #enter your tenant default domain at the end of the autority URL. For example https://login.microsoftonline.com/contoso.onmicrosoft.com
 $GraphUrl="https://graph.microsoft.com/v1.0/informationProtection/threatAssessmentRequests"
 $day=(get-date).day
 $month=(get-date).month
 $year=(get-date).year
-$fileSubmissionIDs="\SubmissionIDs-$domain-$day-$month-$year.txt" #specify path were submission IDs should be exported. For example: c:\Submissions\SubmissionIDs-$domain-$day-$month-$year.txt
+$random=get-random -Maximum 10000
+$fileSubmissionIDs="\SubmissionIDs-$domain-$day-$month-$year_$random.txt" #specify path were submission IDs should be exported. For example: c:\Submissions\SubmissionIDs-$domain-$day-$month-$year.txt
 
 #Function to obtain access token and save it on disk as accessToken.txt.
 function Get-AccessToken{
 	
 	try
 	{
-		if(get-childItem accessToken.txt)
-		{
-			$tryAccessToken=get-childItem accessToken.txt
-			[datetime]$LastWriteTime=$tryAccessToken.LastWriteTime
-			$TokenExpiration=$LastWriteTime.addhours(1)
-			$currentdate=get-date
-		}
+		write-host "Obtaining accessToken"
+		$MsalClientApp = New-MsalClientApplication -ClientId $clientId -TenantId $tenantId | Enable-MsalTokenCacheOnDisk -PassThru
+		$MsalToken = $MsalClientApp | Get-MsalToken  -Scopes "$resourceURI/Mail.Read","$resourceURI/Mail.Read.Shared","$resourceURI/ThreatAssessment.ReadWrite.All","$resourceURI/User.Read"
+		$accessToken=$MsalToken.AccessToken
 	}
 	catch
 	{
 	}
-	if ($TokenExpiration -le $currentdate)
-	{
-		write-host "New Access Token needed"
-		try {
-		$AadModule = Import-Module -Name AzureAD -ErrorAction Stop -PassThru
-		}
-		catch {
-		try
-			{
-			$AadModule = Import-Module -Name AzureADPreview -ErrorAction Stop -PassThru
-			}
-			catch{
-			throw 'Prerequisites not installed (AzureAD PowerShell module not installed)'
-			}
-		}
-		$adal = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-		$adalforms = Join-Path $AadModule.ModuleBase "Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll"
-		[System.Reflection.Assembly]::LoadFrom($adal) | Out-Null
-		[System.Reflection.Assembly]::LoadFrom($adalforms) | Out-Null
-		$authContext = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext" -ArgumentList $authority
-	
-		# Get token by prompting login window.
-		$platformParameters = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters" -ArgumentList "Always"
-		$userId = New-Object "Microsoft.IdentityModel.Clients.ActiveDirectory.UserIdentifier" -ArgumentList ($username, "OptionalDisplayableId")
-		$authResult = $authContext.AcquireTokenAsync($resourceURI, $ClientID, $RedirectUri, $platformParameters)
-		$accessToken = $authResult.result.AccessToken
-		$accessToken > accessToken.txt
-	
-		$tokenPayload=$accessToken.Split(".")[1]
-		while ($tokenPayload.Length % 4) { Write-Verbose "Invalid length for a Base-64 char array or string, adding ="; $tokenPayload += "=" }
-		Write-Verbose "Base64 encoded (padded) payoad:"
-		Write-Verbose $tokenPayload
-		#Convert to Byte array
-		$tokenByteArray = [System.Convert]::FromBase64String($tokenPayload)
-		#Convert to string array
-		$tokenArray = [System.Text.Encoding]::ASCII.GetString($tokenByteArray)
-		Write-Verbose "Decoded array in JSON format:"
-		Write-Verbose $tokenArray
-		#Convert from JSON to PSObject
-		$tokobj = $tokenArray | ConvertFrom-Json
-		$tokobj
-		$DecodedText = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($accessTokendecoded))	
-	}
-	else
-		{
-			$accessToken=get-content accessToken.txt
-		}
 		
-	return $accessToken.ToString()
+	return $accessToken
 }
 
 	
@@ -235,7 +189,3 @@ else
 		write-host "No URL was provided for Submission. Quitting"
 	}
 }
-	
-
-
-
