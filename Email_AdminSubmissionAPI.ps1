@@ -104,14 +104,14 @@ Param
 	}
 	if ($agoHours)
 	{
-		$startdate=(get-date).AddHours(-$agohours).ToUniversalTime()
-		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'hh:mm'Z'")
+		$startdate_temp=(get-date).AddHours(-$agohours).ToUniversalTime()
+		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'HH:mm'Z'")
 		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
 	}
 	if ($agoMinutes)
 	{
 		$startdate_temp=(get-date).AddMinutes(-$agominutes).ToUniversalTime()
-		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'hh:mm'Z'")
+		$startdate=$startdate_temp.tostring("yyyy-MM-dd'T'HH:mm'Z'")
 		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients&`$filter=ReceivedDateTime ge $startdate"
 	}
 	
@@ -340,6 +340,17 @@ Param
 			Check-Submission -ThreatRequestIDs $ThreatRequestIDs
 		}
 	}
+	if ($anythingsubmitted)
+	{
+		write-host "`n"
+		write-host "Deleting temporary .eml files" -foregroundcolor green
+		foreach ($attachmentname in $attachmentnames)
+		{
+		
+			[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
+			Remove-item $attachmentpath
+		}
+	}	
 	
 }	
 
