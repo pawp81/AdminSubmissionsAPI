@@ -41,8 +41,8 @@ param(
 		
     )
 # configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI
-$clientId = ""
-$tenantId = ""
+	$clientId = ""
+	$tenantId = ""
 
 
 # List of static variables.
@@ -76,7 +76,8 @@ Param
 		$ThreatRequestID
 	
 	)
-	$accessToken=Get-AccessToken	
+	$accessToken=Get-AccessToken
+
 	write-host "Checking status of submission ID: " $ThreatRequestID
 	$SubmissionResultURL="$GraphURL/$ThreatRequestID"+'?$expand=results'
 			
@@ -86,12 +87,25 @@ Param
 	$content | select id,CreatedDateTime,contentType,expectedAssessment,category,status,requestSource,RecipientEmail,DestinationRoutingReason
 	write-host "Result of: "$content.results[0].resultType -foregroundcolor green
 	$content.results[0] | select message,createdDateTime
-	$content.results[0] | select @{name="SubmissionID";expression={$ThreatRequestID}},@{name="ResultOf";expression={"PolicyCheck"}},message,createdDateTime | export-csv $fileSubmissionIDs -append
+	if ($content.results[0].resultType -eq "checkPolicy")
+	{
+		$content.results[0] | select @{name="SubmissionID";expression={$ThreatRequestID}},@{name="ResultOf";expression={"PolicyCheck"}},message,createdDateTime | export-csv $fileSubmissionIDs -append
+	}
+
 	if ($content.status -ne "pending")
 	{	
-		write-host "Result of: "$content.results[1].resultType -foregroundcolor green
-		$content.results[1] | select message,createdDateTime
-		$content.results[1] | select @{name="SubmissionID";expression={$ThreatRequestID}},@{name="ResultOf";expression={"Rescan"}},message,createdDateTime | export-csv $fileSubmissionIDs -append
+		if ($content.results[0].resultType -eq "rescan")
+		{
+			write-host "Result of: "$content.results[0].resultType -foregroundcolor green
+			$content.results[0] | select message,createdDateTime
+			$content.results[0] | select @{name="SubmissionID";expression={$ThreatRequestID}},@{name="ResultOf";expression={"Rescan"}},message,createdDateTime | export-csv $fileSubmissionIDs -append
+		}
+		if ($content.results[1].resultType -eq "rescan")
+		{
+			write-host "Result of: "$content.results[1].resultType -foregroundcolor green
+			$content.results[1] | select message,createdDateTime
+			$content.results[1] | select @{name="SubmissionID";expression={$ThreatRequestID}},@{name="ResultOf";expression={"Rescan"}},message,createdDateTime | export-csv $fileSubmissionIDs -append
+		}
 	}
 }
 if ($path)
