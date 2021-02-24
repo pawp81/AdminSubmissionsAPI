@@ -265,7 +265,6 @@ function Submit-Attachment {
 # Function to submit email attachment
 Param
 (	
-	$recipient,
 	$category,
 	$attachmentnames
 )	
@@ -285,7 +284,9 @@ Param
 		}
 		# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
 		$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
-		
+		$a=get-content $attachmentpath
+		$b=($a | Select-string -pattern "To:")
+		$recipient=($b.toString() | Select-String "[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+").Matches.value
 		if ($submit -eq "yes")
 		{
 			$body = @"
@@ -421,7 +422,7 @@ $FindEmailResult=Find-Email -InternetMessageID $InternetMessageID -mailbox $mail
 
 if ($attachment)
 {
-	Submit-Attachment -recipient $FindEmailResult.recipient -attachmentnames $FindEmailResult.path -category $category
+	Submit-Attachment -attachmentnames $FindEmailResult.path -category $category
 }
 else
 {
