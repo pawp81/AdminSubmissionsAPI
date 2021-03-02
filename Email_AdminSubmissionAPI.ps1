@@ -285,7 +285,7 @@ Param
 		# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
 		$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
 		$a=get-content $attachmentpath
-		$b=($a | Select-string -pattern "To:")
+		$b=($a | Select-string -pattern "^To:")
 		$recipient=($b.toString() | Select-String "[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+").Matches.value
 		if ($submit -eq "yes")
 		{
