@@ -70,6 +70,43 @@ $random=get-random -Maximum 10000
 $fileSubmissionIDs="SubmissionIDs-$day-$month-$year_$random.txt"
 $logname="Log-$day-$month-$year_$random.txt"
 
+function ConvertPSObjectToHashtable
+{
+    param (
+        [Parameter(ValueFromPipeline)]
+        $InputObject
+    )
+
+    process
+    {
+        if ($null -eq $InputObject) { return $null }
+
+        if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string])
+        {
+            $collection = @(
+                foreach ($object in $InputObject) { ConvertPSObjectToHashtable $object }
+            )
+
+            Write-Output -NoEnumerate $collection
+        }
+        elseif ($InputObject -is [psobject])
+        {
+            $hash = @{}
+
+            foreach ($property in $InputObject.PSObject.Properties)
+            {
+                $hash[$property.Name] = ConvertPSObjectToHashtable $property.Value
+            }
+
+            $hash
+        }
+        else
+        {
+            $InputObject
+        }
+    }
+}
+
 function Get-AccessToken{
 	
 	try
@@ -136,52 +173,92 @@ Param
 	}
 	$MessageIDs | out-file $logname -append
 	
-	if ($attachment -eq $true)
+	#Preparing MessageURI to be used in the submission request body
+	if ($mailbox)
 	{
-		#Looking for attachment ID. I need to download it to the disk.
-		$path = @()
+		$MessageURI=@()
 		foreach ($MessageID in $MessageIDs)
 		{
-			$MessageAttachmentURI="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/"
-			$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
-			$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
-			write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
-			$AttachmentID=$MessageAttachment.value.id
-			$AttachmentName=$MessageAttachment.value.name
-						
-			#downloading the attachment to current folder
-			$temppath= $attachmentID+".eml"
-			$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
-			write-host "Sending request to fetch attachment: " $AttachmentFetchURL
-			"Sending request to fetch attachment: $AttachmentFetchURL " | out-file $logname -append
-			Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath
-			
-			$path += $attachmentID+".eml"
-			 	
+			$MessageURI+="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID"
 		}
-		$return.path=$path
 	}
 	else
 	{
-	#Preparing MessageURI to be used in the submission request body
-		if ($mailbox)
-		{
-			$MessageURI=@()
-			foreach ($MessageID in $MessageIDs)
-			{
-				$MessageURI+="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID"
-			}
-		}
-		else
-		{
-			$UserGUID=$Message."@odata.context" |select-string -Pattern '[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}' | foreach {$_.matches.value}
-			$MessageURI="https://graph.microsoft.com/v1.0/users/$UserGUID/messages/$MessageID"
-		}	
+		$UserGUID=$Message."@odata.context" |select-string -Pattern '[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}' | foreach {$_.matches.value}
+		$MessageURI="https://graph.microsoft.com/v1.0/users/$UserGUID/messages/$MessageID"
+	}	
 	$return.MessageURI=$MessageURI
-	}
 	
 	$return.recipient=$mailbox
 	return $return
+}
+
+function Find-Attachment {
+	Param
+	(	
+		$InternetMessageID,
+		$mailbox
+	)
+	# This function searches for an attachment and returns Graph-based unique identifier of the message.
+	
+	$accessToken=Get-AccessToken
+
+	$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
+	if ($InternetMessageID)
+	{
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$select=id,toRecipients,sender&`$filter=InternetMessageID eq '<$InternetMessageID>'"
+	}
+	if ($agoHours)
+	{
+		$startdate=(get-date).AddHours(-$agohours).tostring("yyyy-MM-dd'T'hh:mm'Z'")
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$select=id,toRecipients,sender&`$filter=ReceivedDateTime ge $startdate"
+	}
+	if ($agoMinutes)
+	{
+		$startdate=(get-date).AddMinutes(-$agominutes).tostring("yyyy-MM-dd'T'hh:mm'Z'")
+		$URI = "https://graph.microsoft.com/v1.0/users/$mailbox/mailFolders/inbox/messages?`$top=1000&`$select=id,toRecipients,sender&`$filter=ReceivedDateTime ge $startdate"
+	}
+	
+	#write-host "Searching for:" $URI
+	$MessageJSON=Invoke-WebRequest -Uri $URI -Headers $headers
+	$Messages=$MessageJSON.content | ConvertFrom-JSON
+	$MessagesHashtable=$Messages | ConvertPSObjectToHashtable
+
+	if ($Messages.value.length -eq 0)
+	{
+		#write-host "Message not found. Exiting" -foregroundcolor Red
+		"Message not found. Exiting" | out-file $logname -append
+		exit
+	}
+	$Messages = @()
+	$i=0
+	foreach ($Message in $MessagesHashTable.value)
+	{
+		#Saving all messageIDs and sender addresses matching search criteria to the array
+		$Messages+=,(@($Message.ID,$Message.sender.emailaddress.address))
+		$i++
+	}
+	#Looking for attachment ID. I need to download it to the disk.
+	$AttachmentID_sender = @{}
+	for($j=0; $j -lt $Messages.count; $j++)
+	{
+		$MessageID=$Messages[$j][0]
+		$MessageAttachmentURI="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/"
+		$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
+		$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
+		#write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
+		$AttachmentID=$MessageAttachment.value.id
+		$AttachmentName=$MessageAttachment.value.name
+					
+		#downloading the attachment to current folder
+		$temppath= $attachmentID+".eml"
+		$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
+		#write-host "Sending request to fetch attachment: " $AttachmentFetchURL
+		Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath	
+		$AttachmentID_sender.add($attachmentID+".eml",$Messages[$j][1]) #Adding email address of the sender that corresponds to the same AttachmentID
+
+	}
+	return $AttachmentID_sender
 }
 
 function Submit-Email {
@@ -266,81 +343,60 @@ function Submit-Attachment {
 Param
 (	
 	$category,
-	$attachmentnames
+	$sender,
+	$attachmentname
 )	
 	$ThreatRequestIDs=@()
-	foreach ($attachmentname in $attachmentnames)
+	[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
+	write-host "`n"
+	write-host "Submitting following file:" $attachmentpath -foregroundcolor green
+	if ($confirm -eq $true)
 	{
-		
-		[string]$attachmentpath=$PSScriptRoot + "\" + $attachmentname
-		write-host "`n"
-		write-host "Submitting following file:" $attachmentpath -foregroundcolor green
-		if ($confirm -eq $true)
+		$submit=read-host "Submit this attachment? [YES]"
+	}
+	else {
+		$submit="yes"
+	}
+	# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
+	$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
+	$a=get-content $attachmentpath
+	$b=($a | Select-string -pattern "^To:")
+	$recipient=($b.toString() | Select-String "[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+").Matches.value
+	if ($submit -eq "yes")
+	{
+		$body = @"
 		{
-			$submit=read-host "Submit this attachment? [YES]"
-		}
-		else {
-			$submit="yes"
-		}
-		# Base64 encoding of the .eml file content. Reading the content of the file into a byte array.
-		$EncodedContent = [Convert]::ToBase64String([IO.File]::ReadAllBytes($attachmentpath))
-		$a=get-content $attachmentpath
-		$b=($a | Select-string -pattern "^To:")
-		$recipient=($b.toString() | Select-String "[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+").Matches.value
-		if ($submit -eq "yes")
-		{
-			$body = @"
-			{
-		"@odata.type": "#microsoft.graph.emailFileAssessmentRequest",
-		"recipientEmail": "$recipient",
-		"category": "$category",
-		"expectedAssessment": "block",
-		"contentData": "$EncodedContent"
+	"@odata.type": "#microsoft.graph.emailFileAssessmentRequest",
+	"recipientEmail": "$sender",
+	"category": "$category",
+	"expectedAssessment": "block",
+	"contentData": "$EncodedContent"
 }
 "@
-			
-			$accessToken=Get-AccessToken
-			$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
+		$accessToken=Get-AccessToken
+		$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
+		$error.clear()
+		$ErrorOccured = $false
+		$ThreatRequestJSON=Invoke-WebRequest -Uri $GraphURL -Headers $headers -Body $body -Method POST -ContentType 'application/json; charset=utf-8' -ErrorAction continue -ErrorVariable ProcessError
+		if($ProcessError)
+		{
+			write-host "Error submitting Email: " -foregroundcolor red
+			write-host $ProcessError -foregroundcolor red
+			$ErrorOccured=$true
+			Continue
+		}
+		if (!$ErrorOccured)
+		{
+			$ThreatRequest=$ThreatRequestJSON.content |convertfrom-JSON
+			write-host "Email submitted. Submission ID: " $ThreatRequest.id -foregroundcolor green
+			write-host "`n"
+			$ThreatRequestIDs+=$ThreatRequest.id
+			$ThreatRequest.id | out-file $fileSubmissionIDs -append
+			$anythingsubmitted=$true
+		}
+		$submit="no"
+	}
 		
-			$error.clear()
-			$ErrorOccured = $false
-			$ThreatRequestJSON=Invoke-WebRequest -Uri $GraphURL -Headers $headers -Body $body -Method POST -ContentType 'application/json; charset=utf-8' -ErrorAction continue -ErrorVariable ProcessError
-			if($ProcessError)
-			{
-				write-host "Error submitting Email: " -foregroundcolor red
-				write-host $ProcessError -foregroundcolor red
-				$ErrorOccured=$true
-				Continue
-			}
-			if (!$ErrorOccured)
-			{
-				$ThreatRequest=$ThreatRequestJSON.content |convertfrom-JSON
-				write-host "Email submitted. Submission ID: " $ThreatRequest.id -foregroundcolor green
-				write-host "`n"
-				$ThreatRequestIDs+=$ThreatRequest.id
-				$ThreatRequest.id | out-file $fileSubmissionIDs -append
-				$anythingsubmitted=$true
-			}
-			$submit="no"
-		}
-	}
-	
-	if ($anythingsubmitted)
-	{
-		write-host "All request IDs:"
-		$ThreatRequestIDs
-		if ($confirm -eq $true)
-		{
-			$checkSubmission=Read-Host "Do you want to check Submission status? [Yes\No]"
-		}
-		else {
-			$checkSubmission = "No"
-		}	
-		if ($checkSubmission -eq "Yes")
-		{
-			Check-Submission -ThreatRequestIDs $ThreatRequestIDs
-		}
-	}
 	if ($anythingsubmitted)
 	{
 		write-host "`n"
@@ -352,7 +408,6 @@ Param
 			Remove-item $attachmentpath
 		}
 	}	
-	
 }	
 
 Function Check-Submission {
@@ -418,13 +473,26 @@ Param
 
 # Function calls:
 
-$FindEmailResult=Find-Email -InternetMessageID $InternetMessageID -mailbox $mailbox -attachment $attachment
+if ($attachment)
+{
+	$FindEmailResult=@{}
+	$FindEmailResult=Find-Attachment -InternetMessageID $InternetMessageID -mailbox $mailbox -attachment $attachment
+}
+else
+{
+	$FindEmailResult=Find-Email -InternetMessageID $InternetMessageID -mailbox $mailbox -attachment $attachment
+}
 
 if ($attachment)
 {
-	Submit-Attachment -attachmentnames $FindEmailResult.path -category $category
+	foreach($key in $FindEmailResult.keys)
+	{
+		$sender=$FindEmailResult[$key]
+		Submit-Attachment -attachmentname $key -category $category -sender $sender
+	}
 }
 else
 {
 	Submit-Email -MessageURI $FindEmailResult.MessageURI -recipient $FindEmailResult.recipient -category $category
 }
+
