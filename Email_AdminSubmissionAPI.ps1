@@ -67,8 +67,8 @@ $day=(get-date).day
 $month=(get-date).month
 $year=(get-date).year
 $random=get-random -Maximum 10000
-$fileSubmissionIDs="SubmissionIDs-$day-$month-$year_$random.txt"
-$logname="Log-$day-$month-$year_$random.txt"
+$fileSubmissionIDs="SubmissionIDs-$day-$month-$year-$random.txt"
+$logname="Log-$day-$month-$year-$random.txt"
 
 function ConvertPSObjectToHashtable
 {
@@ -238,6 +238,8 @@ function Find-Attachment {
 		$Messages+=,(@($Message.ID,$Message.sender.emailaddress.address))
 		$i++
 	}
+	$MessageIDs | out-file $logname -append
+	
 	#Looking for attachment ID. I need to download it to the disk.
 	$AttachmentID_sender = @{}
 	for($j=0; $j -lt $Messages.count; $j++)
