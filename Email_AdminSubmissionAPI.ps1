@@ -56,9 +56,14 @@ param(
     )
 
 # configure below variables according to: https://github.com/pawp81/AdminSubmissionsAPI
-$clientId =  ""
-$tenantId = "" 
+$clientId = ""
+$tenantId = ""
 
+if (!$clientId -or !$tenantId)
+{
+	Write-Host "Pelase config clientId and tenantId." -foregroundcolor Red
+	return
+}
 
 # List of static variables.
 $resourceURI = "https://graph.microsoft.com"
@@ -248,17 +253,25 @@ function Find-Attachment {
 		$MessageAttachmentURI="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/"
 		$MessageAttachmentJSON=Invoke-WebRequest -Uri $MessageAttachmentURI -Headers $headers
 		$MessageAttachment= $MessageAttachmentJSON | ConvertFrom-JSON
-		#write-host "Message attachment ID found: " $MessageAttachment.value.id -foregroundcolor green
+
 		$AttachmentID=$MessageAttachment.value.id
 		$AttachmentName=$MessageAttachment.value.name
-					
-		#downloading the attachment to current folder
-		$temppath= $attachmentID+".eml"
-		$AttachmentFetchURL="https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
-		#write-host "Sending request to fetch attachment: " $AttachmentFetchURL
-		Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath	
-		$AttachmentID_sender.add($attachmentID+".eml",$Messages[$j][1]) #Adding email address of the sender that corresponds to the same AttachmentID
 
+		if ($attachmentID)
+		{
+			write-host "Message attachment ID found: " $MessageAttachment.value.id $AttachmentName -foregroundcolor green
+
+			#downloading the attachment to current folder
+			$temppath = $attachmentID + ".eml"
+			$AttachmentFetchURL = "https://graph.microsoft.com/v1.0/users/$mailbox/messages/$MessageID/attachments/$AttachmentID/`$value"
+			#write-host "Sending request to fetch attachment: " $AttachmentFetchURL
+			Invoke-WebRequest -Uri $AttachmentFetchURL -Headers $headers -outfile $temppath	
+			$AttachmentID_sender.add($attachmentID+".eml",$Messages[$j][1]) #Adding email address of the sender that corresponds to the same AttachmentID
+		}
+		else
+		{
+			Write-Host "No attachment found." -foregroundcolor green
+		}
 	}
 	return $AttachmentID_sender
 }
@@ -379,6 +392,7 @@ Param
 		$Headers= @{"Content-Type" = "application/json" ; "Authorization" = "Bearer " + $accessToken}
 		$error.clear()
 		$ErrorOccured = $false
+
 		$ThreatRequestJSON=Invoke-WebRequest -Uri $GraphURL -Headers $headers -Body $body -Method POST -ContentType 'application/json; charset=utf-8' -ErrorAction continue -ErrorVariable ProcessError
 		if($ProcessError)
 		{
@@ -490,6 +504,8 @@ if ($attachment)
 	foreach($key in $FindEmailResult.keys)
 	{
 		$sender=$FindEmailResult[$key]
+		Write-Host $key $category $sender
+		
 		Submit-Attachment -attachmentname $key -category $category -sender $sender
 	}
 }
